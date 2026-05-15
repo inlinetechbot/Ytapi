@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ytdlp-api
+    env: python
+    plan: standard
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2"
+    healthCheckPath: /api/status
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: MAX_FILE_AGE_HOURS
+        value: 24
+      - key: MAX_CONCURRENT_DOWNLOADS
+        value: 5
