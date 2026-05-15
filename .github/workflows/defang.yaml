@@ -1,0 +1,50 @@
+name: Defang
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Whether to deploy up or down
+        required: true
+        default: up
+        type: choice
+        options:
+          - up
+          - down
+      stack:
+        description: The stack to deploy up or down. (Leave blank for default)
+        default: production
+jobs:
+  defang:
+    name: Defang ${{ github.event.inputs.action || 'up' }} ${{ github.event.inputs.stack || 'production' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      cancel-in-progress: false
+      group: deploy-Ytapi-${{ github.event.inputs.stack || 'production' }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v6.0.0
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Defang ${{ github.event.inputs.action || 'up' }} ${{ github.event.inputs.stack || 'production' }}
+        uses: DefangLabs/defang-github-action@v2
+        with:
+          command: ${{ github.event.inputs.action || 'up' }}
+          project: Ytapi
+          stack: ${{ github.event.inputs.stack || 'production' }}
+      - name: Deployment Summary
+        uses: DefangLabs/defang-github-action@v2
+        with:
+          command: services
+          project: Ytapi
+          stack: ${{ github.event.inputs.stack || 'production' }}
+    environment: defang-production
